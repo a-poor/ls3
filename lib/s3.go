@@ -13,38 +13,55 @@ type S3Client interface {
 	DeleteObject(context.Context, *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
 }
 
-type s3ClientMock struct {
+type s3ClientSuccessMock struct {
 	listRes *s3.ListObjectsV2Output
-	listErr error
-
-	getRes *s3.GetObjectOutput
-	getErr error
-
-	putRes *s3.PutObjectOutput
-	putErr error
-
-	delRes *s3.DeleteObjectOutput
-	delErr error
+	getRes  *s3.GetObjectOutput
+	putRes  *s3.PutObjectOutput
+	delRes  *s3.DeleteObjectOutput
 }
 
-func NewS3ClientMock() S3Client {
-	return &s3ClientMock{}
+func NewS3ClientSuccessMock(l *s3.ListObjectsV2Output, g *s3.GetObjectOutput, p *s3.PutObjectOutput, d *s3.DeleteObjectOutput) S3Client {
+	return &s3ClientSuccessMock{l, g, p, d}
 }
 
-func (c *s3ClientMock) ListObjects(ctx context.Context, params *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
-	return c.listRes, c.listErr
+func (c *s3ClientSuccessMock) ListObjects(ctx context.Context, params *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+	return c.listRes, nil
 }
 
-func (c *s3ClientMock) GetObject(ctx context.Context, params *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
-	return c.getRes, c.getErr
+func (c *s3ClientSuccessMock) GetObject(ctx context.Context, params *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+	return c.getRes, nil
 }
 
-func (c *s3ClientMock) PutObject(ctx context.Context, params *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
-	return c.putRes, c.putErr
+func (c *s3ClientSuccessMock) PutObject(ctx context.Context, params *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+	return c.putRes, nil
 }
 
-func (c *s3ClientMock) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
-	return c.delRes, c.delErr
+func (c *s3ClientSuccessMock) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+	return c.delRes, nil
+}
+
+type s3ClientErrMock struct {
+	err error
+}
+
+func NewS3ClientErrMock(err error) S3Client {
+	return &s3ClientErrMock{}
+}
+
+func (c *s3ClientErrMock) ListObjects(ctx context.Context, params *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+	return nil, c.err
+}
+
+func (c *s3ClientErrMock) GetObject(ctx context.Context, params *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
+	return nil, c.err
+}
+
+func (c *s3ClientErrMock) PutObject(ctx context.Context, params *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+	return nil, c.err
+}
+
+func (c *s3ClientErrMock) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+	return nil, c.err
 }
 
 type s3Client struct {
