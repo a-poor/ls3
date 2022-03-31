@@ -30,10 +30,7 @@ func (fs *LocalFS) ListContents() ([]FileObject, error) {
 
 	var files []FileObject
 	for _, fi := range fis {
-		files = append(files, newFileObject(
-			fs.WorkPath,
-			fi,
-		))
+		files = append(files, newFileObject(fi))
 	}
 	return files, nil
 }

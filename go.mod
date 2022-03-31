@@ -3,12 +3,12 @@ module github.com/a-poor/ls3
 go 1.18
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.3
 	github.com/go-git/go-billy/v5 v5.3.1
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect

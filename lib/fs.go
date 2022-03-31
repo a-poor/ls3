@@ -2,38 +2,47 @@ package lib
 
 import (
 	"io/fs"
+	"sort"
 )
 
+// FileObject represents a file or directory in the filesystem.
 type FileObject struct {
-	Path  string // Path where the file/dir is located
 	Name  string // Name of the file/dir
 	IsDir bool   // Is this a directory?
 	Size  int64  // Size of the file in bytes
 }
 
-func newFileObject(dir string, fi fs.FileInfo) FileObject {
+func newFileObject(fi fs.FileInfo) FileObject {
 	if fi.IsDir() {
-		return newDirFO(dir, fi.Name())
+		return newDirFO(fi.Name())
 	}
-	return newFileFO(dir, fi.Name(), fi.Size())
+	return newFileFO(fi.Name(), fi.Size())
 }
 
-func newFileFO(dir, name string, size int64) FileObject {
+func newFileFO(name string, size int64) FileObject {
 	return FileObject{
-		Path:  dir,
 		Name:  name,
 		IsDir: false,
 		Size:  size,
 	}
 }
 
-func newDirFO(dir, name string) FileObject {
+func newDirFO(name string) FileObject {
 	return FileObject{
-		Path:  dir,
 		Name:  name,
 		IsDir: true,
 		Size:  0,
 	}
+}
+
+// SortFileObjects sorts the given slice of FileObjects in place.
+func SortFileObjects(fos []FileObject) {
+	sort.Slice(fos, func(i, j int) bool {
+		if fos[i].IsDir == fos[j].IsDir {
+			return fos[i].Name < fos[j].Name
+		}
+		return fos[i].IsDir
+	})
 }
 
 type FileSystem interface {
