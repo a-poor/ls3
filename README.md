@@ -6,14 +6,19 @@ _created by Austin Poor_
 
 ## Outline
 
-* S3
-    * List files
-    * Download files
-    * Upload files
-* Local fs
-    * List files
-* Visual
-    * Output local files
-    * Output S3 files
-    * Output files as bubble-tea list
-    * Show files in two columns
+* Filesystems (local vs S3)
+  * Navigate through directories
+  * List files/folders in a directory / bucket
+  * Get / read / download files
+  * Put / write / upload files
+  * Delete files
+  * Diff files / directories?
+* Data Display
+  * Using bubbletea & bubbles
+  * Show & navigate through directories
+  * Filter files in directory
+  * Actions (hotkeys?) for navigating, filtering, creating, copying, deleting files/dirs
+  * Possibly display local and S3 side-by-side?
+* CLI
+  * Initializes the data display
+  * Set defaults in a config file
