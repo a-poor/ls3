@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"errors"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 )
@@ -56,13 +58,13 @@ func (fs *LocalFS) ListContents() ([]FileObject, error) {
 }
 
 func (fs *LocalFS) ChangeDir(newDir string) error {
-	return nil
+	return errors.New("not implemented")
 }
 
 func (fs *LocalFS) GetFile(fileName string) ([]byte, error) {
-	return nil, nil
+	return nil, errors.New("not implemented")
 }
 
 func (fs *LocalFS) WriteFile(fileName string, b []byte) error {
-	return nil
+	return errors.New("not implemented")
 }

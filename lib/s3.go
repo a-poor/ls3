@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -133,17 +134,17 @@ func NewS3FS(client S3Client, bucket, workDir string) *S3FS {
 }
 
 func (fs *S3FS) ListContents() ([]FileObject, error) {
-	return nil, nil
+	return nil, errors.New("not implemented") // TODO – Not implemented...
 }
 
 func (fs *S3FS) ChangeDir(string) error {
-	return nil
+	return errors.New("not implemented")
 }
 
 func (fs *S3FS) GetFile(string) ([]byte, error) {
-	return nil, nil
+	return nil, errors.New("not implemented")
 }
 
 func (fs *S3FS) WriteFile(string, []byte) error {
-	return nil
+	return errors.New("not implemented")
 }
