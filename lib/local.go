@@ -6,32 +6,37 @@ import (
 )
 
 type LocalFS struct {
-	FS       billy.Filesystem
-	WorkPath string
+	FS      billy.Filesystem
+	WorkDir string
 }
 
 func NewLocalFS(baseDir string) *LocalFS {
-	fs := osfs.New(baseDir)
-	return NewLocalFSFromBillyFS(fs)
+	fs := osfs.New("/")
+	return NewLocalFSFromBillyFS(fs, baseDir)
 }
 
-func NewLocalFSFromBillyFS(fs billy.Filesystem) *LocalFS {
+func NewLocalFSFromBillyFS(fs billy.Filesystem, baseDir string) *LocalFS {
 	return &LocalFS{
-		FS:       fs,
-		WorkPath: fs.Root(),
+		FS:      fs,
+		WorkDir: baseDir,
 	}
 }
 
 func (fs *LocalFS) ListContents() ([]FileObject, error) {
-	fis, err := fs.FS.ReadDir(fs.WorkPath)
+	// Get the current working directory's contents
+	fis, err := fs.FS.ReadDir(fs.WorkDir)
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert them to FileObjects
 	var files []FileObject
 	for _, fi := range fis {
 		files = append(files, newFileObject(fi))
 	}
+
+	// Sort the files and return
+	SortFileObjects(files)
 	return files, nil
 }
 
