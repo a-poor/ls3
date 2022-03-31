@@ -12,6 +12,7 @@ type FileObject struct {
 	Size  int64  // Size of the file in bytes
 }
 
+// newFileObject creates a new FileObject instances from the given fs.FileInfo.
 func newFileObject(fi fs.FileInfo) FileObject {
 	if fi.IsDir() {
 		return newDirFO(fi.Name())
@@ -19,6 +20,7 @@ func newFileObject(fi fs.FileInfo) FileObject {
 	return newFileFO(fi.Name(), fi.Size())
 }
 
+// newFileFO creates a new FileObject instance for a file.
 func newFileFO(name string, size int64) FileObject {
 	return FileObject{
 		Name:  name,
@@ -27,6 +29,7 @@ func newFileFO(name string, size int64) FileObject {
 	}
 }
 
+// newDirFO creates a new FileObject instance for a directory.
 func newDirFO(name string) FileObject {
 	return FileObject{
 		Name:  name,
@@ -45,6 +48,22 @@ func SortFileObjects(fos []FileObject) {
 	})
 }
 
+// FileSystem is an interface for standardizing the process
+// of navigating directories and accessing files in a local
+// filesystem or in S3.
+//
+// The FileSystem interface is used by the LocalFS, for
+// accessing local files (or any billy.Filesystem, like Memfs),
+// and S3FS, for accessing files in S3.
+//
+// Currently, FileSystem only supports listing a directory's
+// contents, changing directories, getting files, and writing
+// files.
+//
+// Future versions of this interface may support other operations
+// such as creating directories, deleting files, copying files from
+// another FileSystem checking if a file/dir exists, previewing
+// files, diffing files, etc.
 type FileSystem interface {
 	// List the contents of the current working directory
 	ListContents() ([]FileObject, error)
@@ -60,4 +79,5 @@ type FileSystem interface {
 
 	// DoesDirExist(string) (bool, error)
 	// DoesFileExist(string) (bool, error)
+	// CopyFileFrom(string, string, FileSystem) error
 }

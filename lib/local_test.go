@@ -30,10 +30,14 @@ func splitPath(p string) string {
 	return "" // Error: Return empty string
 }
 
+// fmtFileBody is a helper function for creating a consistent
+// body for test files.
 func fmtFileBody(name string) string {
 	return fmt.Sprintf("This file is called %q\n", name)
 }
 
+// prepareMemFS is a helper function for creating and populating
+// an in-memory billy.Filesystem.
 func prepareMemFS() (billy.Filesystem, error) {
 	// Define files and directories to create
 	dirs := []string{
@@ -248,6 +252,8 @@ func TestLocalFSGetFile(t *testing.T) {
 			t.Errorf("Expected %q, got %q", expect, body)
 		}
 	}
+
+	// TODO - Add test for getting a non-existent file
 }
 
 func TestLocalFSWriteFile(t *testing.T) {
@@ -259,4 +265,7 @@ func TestLocalFSWriteFile(t *testing.T) {
 	}
 	// lfs := lib.NewLocalFSFromBillyFS(fs, "/")
 	_ = lib.NewLocalFSFromBillyFS(fs, "/")
+
+	// TODO - Add test for writing a file
+	// TODO - Add test for writing a file to a different directory
 }
