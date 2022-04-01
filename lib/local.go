@@ -10,8 +10,11 @@ import (
 )
 
 const (
+	RootDirS3    = ""
+	RootDirLocal = "/"
+
 	// Root directory of the billy filesystem
-	RootBillyDir = "/" // TODO – Is this the best option? Can this be reconfigured?
+	rootBillyDir = RootDirLocal // TODO – Is this the best option? Can this be reconfigured?
 )
 
 // LocalFS implements the FileSystem interface for the local filesystem.
@@ -25,7 +28,7 @@ type LocalFS struct {
 // NewLocalFS creates a new LocalFS instance with the given baseDir as the
 // starting working directory.
 func NewLocalFS(baseDir string) *LocalFS {
-	fs := osfs.New(RootBillyDir)
+	fs := osfs.New(rootBillyDir)
 	return NewLocalFSFromBillyFS(fs, baseDir)
 }
 
@@ -150,4 +153,8 @@ func (fs *LocalFS) IsDir(name string) bool {
 	p := fs.fmtPath(name)
 	fi, _ := fs.FS.Stat(p) // TODO - Handle error?
 	return fi != nil && fi.IsDir()
+}
+
+func (fs *LocalFS) IsAtRoot() bool {
+	return fs.WorkDir == RootDirLocal
 }

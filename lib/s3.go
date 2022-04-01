@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 	"errors"
+	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -21,70 +22,6 @@ type S3Client interface {
 
 	// DeleteObject deletes the specified S3 object
 	DeleteObject(context.Context, *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
-}
-
-// s3ClientSuccessMock is a mock implementation of S3Client that always returns
-// the specified success results (with a nil error).
-type s3ClientSuccessMock struct {
-	list *s3.ListObjectsV2Output // Always return this response for ListObjects
-	get  *s3.GetObjectOutput     // Always return this response for GetObject
-	put  *s3.PutObjectOutput     // Always return this response for PutObject
-	del  *s3.DeleteObjectOutput  // Always return this response for DeleteObject
-}
-
-// NewS3ClientSuccessMock returns a mock S3Client that always returns the specified
-// success results (with a nil error) – used for testing.
-//
-//   - "list" is returned by "client.ListObjects"
-//   - "get"  is returned by "client.GetObject"
-//   - "put"  is returned by "client.PutObject"
-//   - "del"  is returned by "client.DeleteObject"
-//
-func NewS3ClientSuccessMock(list *s3.ListObjectsV2Output, get *s3.GetObjectOutput, put *s3.PutObjectOutput, del *s3.DeleteObjectOutput) S3Client {
-	return &s3ClientSuccessMock{list, get, put, del}
-}
-
-func (c *s3ClientSuccessMock) ListObjects(ctx context.Context, params *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
-	return c.list, nil
-}
-
-func (c *s3ClientSuccessMock) GetObject(ctx context.Context, params *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
-	return c.get, nil
-}
-
-func (c *s3ClientSuccessMock) PutObject(ctx context.Context, params *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
-	return c.put, nil
-}
-
-func (c *s3ClientSuccessMock) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
-	return c.del, nil
-}
-
-// s3ClientErrMock is a mock implementation of S3Client that always returns
-// the specified error, regardless of the input parameters.
-type s3ClientErrMock struct {
-	err error // Always return this error for all methods
-}
-
-// NewS3ClientErrMock returns a new mock S3Client that always returns the specified error.
-func NewS3ClientErrMock(err error) S3Client {
-	return &s3ClientErrMock{err}
-}
-
-func (c *s3ClientErrMock) ListObjects(ctx context.Context, params *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
-	return nil, c.err
-}
-
-func (c *s3ClientErrMock) GetObject(ctx context.Context, params *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
-	return nil, c.err
-}
-
-func (c *s3ClientErrMock) PutObject(ctx context.Context, params *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
-	return nil, c.err
-}
-
-func (c *s3ClientErrMock) DeleteObject(ctx context.Context, params *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
-	return nil, c.err
 }
 
 // s3Client is a real implementation of S3Client that uses the AWS SDK v2
@@ -125,7 +62,15 @@ type S3FS struct {
 
 // NewS3FS creates a new S3FS instance using the specified S3 client, bucket,
 // and working directory.
-func NewS3FS(client S3Client, bucket, workDir string) *S3FS {
+func NewS3FS(cfg aws.Config, bucket, workDir string) *S3FS {
+	return &S3FS{
+		Client:  NewS3Client(cfg),
+		Bucket:  bucket,
+		WorkDir: workDir,
+	}
+}
+
+func NewS3FSWithClient(client S3Client, bucket, workDir string) *S3FS {
 	return &S3FS{
 		Client:  client,
 		Bucket:  bucket,
@@ -133,18 +78,40 @@ func NewS3FS(client S3Client, bucket, workDir string) *S3FS {
 	}
 }
 
+func (fs *S3FS) fmtPath(p string) string {
+	p2 := path.Join(fs.WorkDir, p)
+	p2 = path.Clean(p2)
+	return p2
+}
+
 func (fs *S3FS) ListContents() ([]FileObject, error) {
 	return nil, errors.New("not implemented") // TODO – Not implemented...
 }
 
 func (fs *S3FS) ChangeDir(string) error {
-	return errors.New("not implemented")
+	return errors.New("not implemented") // TODO – Not implemented...
 }
 
 func (fs *S3FS) GetFile(string) ([]byte, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New("not implemented") // TODO – Not implemented...
 }
 
 func (fs *S3FS) WriteFile(string, []byte) error {
-	return errors.New("not implemented")
+	return errors.New("not implemented") // TODO – Not implemented...
+}
+
+func (fs *S3FS) PathExists(name string) bool {
+	return false // TODO - Not implemented...
+}
+
+func (fs *S3FS) IsFile(name string) bool {
+	return false // TODO - Not implemented...
+}
+
+func (fs *S3FS) IsDir(name string) bool {
+	return false // TODO - Not implemented...
+}
+
+func (fs *S3FS) IsAtRoot() bool {
+	return fs.WorkDir == RootDirS3
 }
