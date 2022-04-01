@@ -1,8 +1,17 @@
 package lib
 
 import (
+	"errors"
 	"io/fs"
 	"sort"
+)
+
+var (
+	ErrFileDoesNotExist  = errors.New("file does not exist")
+	ErrDirDoesNotExist   = errors.New("directory does not exist")
+	ErrPathAlreadyExists = errors.New("path already exists")
+	ErrExpectedDirPath   = errors.New("expected path to be a directory")
+	ErrExpectedFilePath  = errors.New("expected path to be a file")
 )
 
 // FileObject represents a file or directory in the filesystem.

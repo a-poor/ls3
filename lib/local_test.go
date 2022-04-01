@@ -2,6 +2,7 @@ package lib_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -42,6 +43,7 @@ func prepareMemFS() (billy.Filesystem, error) {
 	// Define files and directories to create
 	dirs := []string{
 		"/.git",
+		"/dir1",
 		"/_dir2",
 		"/dir3/subdir",
 	}
@@ -61,13 +63,19 @@ func prepareMemFS() (billy.Filesystem, error) {
 			return nil, err
 		}
 	}
+
 	for _, f := range files {
 		file, err := fs.Create(f)
 		if err != nil {
 			return nil, err
 		}
+
 		txt := fmtFileBody(f)
-		file.Write([]byte(txt))
+		_, err = file.Write([]byte(txt))
+		if err != nil {
+			return nil, err
+		}
+
 		err = file.Close()
 		if err != nil {
 			return nil, err
@@ -75,6 +83,42 @@ func prepareMemFS() (billy.Filesystem, error) {
 	}
 	// ...done with billly FS prep.
 	return fs, nil
+}
+
+func Test_prepareMemFS(t *testing.T) {
+	fs, err := prepareMemFS()
+	if err != nil {
+		t.Errorf("Error preparing billy.Filesystem: %s", err)
+		t.FailNow()
+	}
+
+	// Check the contents of the billy filesystem
+	files := []string{
+		"/_foo.txt",
+		"/bar.json",
+		"/.gitignore",
+		"/_dir2/sub-file.txt",
+		"/dir3/subdir/another_file",
+	}
+	for _, fn := range files {
+		f, err := fs.Open(fn)
+		if err != nil {
+			t.Errorf("Error opening file %q: %s", fn, err)
+			t.FailNow()
+		}
+		defer f.Close()
+
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			t.Errorf("Error reading file %q: %s", fn, err)
+			t.FailNow()
+		}
+
+		txt := fmtFileBody(fn)
+		if string(b) != txt {
+			t.Errorf("Expected %q, got %q", txt, string(b))
+		}
+	}
 }
 
 func TestLocalFSListContents(t *testing.T) {
@@ -249,7 +293,7 @@ func TestLocalFSGetFile(t *testing.T) {
 		expect := fmtFileBody(fn)
 		body := string(b)
 		if body != expect {
-			t.Errorf("Expected %q, got %q", expect, body)
+			t.Errorf("Expected file %q's contents to be %q, got %q", fn, expect, body)
 		}
 	}
 
@@ -263,9 +307,186 @@ func TestLocalFSWriteFile(t *testing.T) {
 		t.Errorf("Error preparing billy.Filesystem: %s", err)
 		t.FailNow()
 	}
-	// lfs := lib.NewLocalFSFromBillyFS(fs, "/")
-	_ = lib.NewLocalFSFromBillyFS(fs, "/")
+	lfs := lib.NewLocalFSFromBillyFS(fs, "/")
 
 	// TODO - Add test for writing a file
-	// TODO - Add test for writing a file to a different directory
+	files := []string{
+		"foo.txt",
+		"bar.txt",
+		"baz.txt",
+	}
+	for _, fn := range files {
+		txt := fmtFileBody(fn)
+		err = lfs.WriteFile(fn, []byte(txt))
+		if err != nil {
+			t.Errorf("Error writing file to LocalFS %q: %s", fn, err)
+			continue
+		}
+		f, err := fs.Open(fn)
+		if err != nil {
+			t.Errorf("Error opening billy.File %q: %s", fn, err)
+			continue
+		}
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			t.Errorf("Error reading billy.File %q: %s", fn, err)
+			continue
+		}
+		if string(b) != txt {
+			t.Errorf("Expected file %q to be %q, got %q", fn, txt, string(b))
+			continue
+		}
+	}
+
+	// TODO - Add test for writing a file to a different directory...
+}
+
+func TestPathExists(t *testing.T) {
+	// Create a new pre-populated billy fs and LocalFS instance
+	fs, err := prepareMemFS()
+	if err != nil {
+		t.Errorf("Error preparing billy.Filesystem: %s", err)
+		t.FailNow()
+	}
+	lfs := lib.NewLocalFSFromBillyFS(fs, "/")
+
+	files := []string{
+		"/_foo.txt",
+		"/bar.json",
+		"/.gitignore",
+	}
+	dirs := []string{
+		".git/",
+		"_dir2",
+		"dir3/",
+	}
+	fakePaths := []string{
+		".not-really-git/",
+		"dirrrrr/",
+		"fake.txt",
+		"im-not-here.json",
+	}
+	t.Run("files-exist", func(t *testing.T) {
+		for _, fn := range files {
+			if !lfs.PathExists(fn) {
+				t.Errorf("Expected file path %q to exist", fn)
+			}
+		}
+	})
+	t.Run("dirs-exist", func(t *testing.T) {
+		for _, dn := range dirs {
+			if !lfs.PathExists(dn) {
+				t.Errorf("Expected dir path %q to exist", dn)
+			}
+		}
+	})
+	t.Run("fake-paths", func(t *testing.T) {
+		for _, p := range fakePaths {
+			if lfs.PathExists(p) {
+				t.Errorf("Expected fake path %q to not exist", p)
+			}
+		}
+	})
+
+	// TODO - Test checking paths after changing directories
+}
+
+func TestIsFile(t *testing.T) {
+	// Create a new pre-populated billy fs and LocalFS instance
+	fs, err := prepareMemFS()
+	if err != nil {
+		t.Errorf("Error preparing billy.Filesystem: %s", err)
+		t.FailNow()
+	}
+	lfs := lib.NewLocalFSFromBillyFS(fs, "/")
+
+	files := []string{
+		"/_foo.txt",
+		"/bar.json",
+		"/.gitignore",
+	}
+	dirs := []string{
+		".git/",
+		"_dir2",
+		"dir3/",
+	}
+	fakePaths := []string{
+		".not-really-git/",
+		"dirrrrr/",
+		"fake.txt",
+		"im-not-here.json",
+	}
+	t.Run("files-exist", func(t *testing.T) {
+		for _, fn := range files {
+			if !lfs.IsFile(fn) {
+				t.Errorf("Expected file path %q to be file", fn)
+			}
+		}
+	})
+	t.Run("dirs-not-files", func(t *testing.T) {
+		for _, dn := range dirs {
+			if lfs.IsFile(dn) {
+				t.Errorf("Expected dir path %q to not be file", dn)
+			}
+		}
+	})
+	t.Run("fake-paths", func(t *testing.T) {
+		for _, p := range fakePaths {
+			if lfs.IsFile(p) {
+				t.Errorf("Expected fake path %q to not be file", p)
+			}
+		}
+	})
+
+	// TODO - Test checking paths after changing directories
+}
+
+func TestIsDir(t *testing.T) {
+	// Create a new pre-populated billy fs and LocalFS instance
+	fs, err := prepareMemFS()
+	if err != nil {
+		t.Errorf("Error preparing billy.Filesystem: %s", err)
+		t.FailNow()
+	}
+	lfs := lib.NewLocalFSFromBillyFS(fs, "/")
+
+	files := []string{
+		"/_foo.txt",
+		"/bar.json",
+		"/.gitignore",
+	}
+	dirs := []string{
+		".git/",
+		"_dir2",
+		"dir3/",
+	}
+	fakePaths := []string{
+		".not-really-git/",
+		"dirrrrr/",
+		"fake.txt",
+		"im-not-here.json",
+	}
+	t.Run("files-not-dirs", func(t *testing.T) {
+		for _, fn := range files {
+			if lfs.IsDir(fn) {
+				t.Errorf("Expected file path %q to not be dir", fn)
+			}
+		}
+	})
+	t.Run("dirs-exist", func(t *testing.T) {
+		for _, dn := range dirs {
+			if !lfs.IsDir(dn) {
+				t.Errorf("Expected dir path %q to be dir", dn)
+			}
+		}
+	})
+	t.Run("fake-paths", func(t *testing.T) {
+		for _, p := range fakePaths {
+			if lfs.IsDir(p) {
+				t.Errorf("Expected fake path %q to not be dir", p)
+			}
+		}
+	})
+
+	// TODO - Test checking paths after changing directories
 }

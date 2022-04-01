@@ -1,7 +1,9 @@
 package lib
 
 import (
-	"errors"
+	"io/ioutil"
+	"os"
+	"path"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -57,14 +59,95 @@ func (fs *LocalFS) ListContents() ([]FileObject, error) {
 	return files, nil
 }
 
+func (fs *LocalFS) fmtPath(p string) string {
+	p2 := path.Join(fs.WorkDir, p)
+	p2 = path.Clean(p2)
+	return p2
+}
+
 func (fs *LocalFS) ChangeDir(newDir string) error {
-	return errors.New("not implemented")
+	// Validate the new path
+	if !fs.PathExists(newDir) {
+		return ErrDirDoesNotExist
+	}
+	if !fs.IsDir(newDir) {
+		return ErrExpectedDirPath
+	}
+
+	// Format the new path
+	wd := fs.fmtPath(newDir)
+
+	// Set the new path and return success
+	fs.WorkDir = wd
+	return nil
 }
 
 func (fs *LocalFS) GetFile(fileName string) ([]byte, error) {
-	return nil, errors.New("not implemented")
+	// Validate the path
+	if !fs.PathExists(fileName) {
+		return nil, ErrFileDoesNotExist
+	}
+	if !fs.IsFile(fileName) {
+		return nil, ErrExpectedFilePath
+	}
+
+	// Format the new path
+	wd := fs.fmtPath(fileName)
+
+	// Open & read the file
+	f, err := fs.FS.Open(wd)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 func (fs *LocalFS) WriteFile(fileName string, b []byte) error {
-	return errors.New("not implemented")
+	// Validate the path
+	if fs.IsDir(fileName) {
+		return ErrExpectedFilePath
+	}
+
+	// Format the new path
+	wd := fs.fmtPath(fileName)
+
+	// Get the file
+	f, err := fs.FS.Create(wd)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Write the file
+	_, err = f.Write(b)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fs *LocalFS) PathExists(name string) bool {
+	p := fs.fmtPath(name)
+	_, err := fs.FS.Stat(p)
+	return !os.IsNotExist(err)
+}
+
+func (fs *LocalFS) IsFile(name string) bool {
+	p := fs.fmtPath(name)
+	fi, _ := fs.FS.Stat(p) // TODO - Handle error?
+	return fi != nil && !fi.IsDir()
+}
+
+func (fs *LocalFS) IsDir(name string) bool {
+	p := fs.fmtPath(name)
+	fi, _ := fs.FS.Stat(p) // TODO - Handle error?
+	return fi != nil && fi.IsDir()
 }
