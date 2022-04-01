@@ -79,8 +79,19 @@ func NewS3FSWithClient(client S3Client, bucket, workDir string) *S3FS {
 }
 
 func (fs *S3FS) fmtPath(p string) string {
+	// Special case: Moving up from root directory
+	if fs.WorkDir == "" && p == ".." {
+		return RootDirS3
+	}
+
 	p2 := path.Join(fs.WorkDir, p)
 	p2 = path.Clean(p2)
+
+	// Special case: Moved up to root directory
+	if p2 == "/" {
+		return RootDirS3
+	}
+
 	return p2
 }
 
